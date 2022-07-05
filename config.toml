@@ -1,4 +1,4 @@
-baseURL = "https://example.com"
+baseURL = "https://www.lyrzyh.com"
 
 # theme
 # 主题
@@ -9,17 +9,17 @@ theme = "LoveIt"
 
 # website title
 # 网站标题
-title = "LoveIt"
+title = "夜阑卧听风吹雨，铁马冰河入梦来"
 
 # determines default content language ["en", "zh-cn", "fr", "pl", ...]
 # 设置默认的语言 ["en", "zh-cn", "fr", "pl", ...]
-defaultContentLanguage = "en"
+defaultContentLanguage = "zh-cn"
 # language code ["en", "zh-CN", "fr", "pl", ...]
 # 网站语言, 仅在这里 CN 大写 ["en", "zh-CN", "fr", "pl", ...]
-languageCode = "en"
+languageCode = "zh-CN"
 # language name ["English", "简体中文", "Français", "Polski", ...]
 # 语言名称 ["English", "简体中文", "Français", "Polski", ...]
-languageName = "English"
+languageName = "简体中文"
 # whether to include Chinese/Japanese/Korean
 # 是否包括中日韩文字
 hasCJKLanguage = false
@@ -44,11 +44,12 @@ enableGitInfo = false
 # 是否使用 emoji 代码
 enableEmoji = true
 
+
 # Author config
 # 作者配置
 [author]
-  name = "xxxx"
-  email = ""
+  name = "整挺好"
+  email = "1113706590@qq.com"
   link = ""
 
 # Menu config
@@ -127,10 +128,10 @@ enableEmoji = true
       logo = ""
       # title name
       # 标题名称
-      name = "LoveIt"
+      name = "整挺好"
       # you can add extra information before the name (HTML format is supported), such as icons
       # 你可以在名称 (允许 HTML 格式) 之前添加其他信息, 例如图标
-      pre = "<i class='far fa-kiss-wink-heart fa-fw' aria-hidden='true'></i>"
+      pre = ""
       # you can add extra information after the name (HTML format is supported), such as icons
       # 你可以在名称 (允许 HTML 格式) 之后添加其他信息, 例如图标
       post = ""
@@ -156,10 +157,10 @@ enableEmoji = true
     author = true
     # site creation time
     # 网站创立年份
-    since = 2019
+    since = 2022
     # ICP info only in China (HTML format is supported)
     # ICP 备案信息，仅在中国使用 (支持 HTML 格式)
-    icp = ""
+    icp = "陕ICP备2022005161号-1"
     # license info (HTML format is supported)
     # 许可协议信息 (支持 HTML 格式)
     license= '<a rel="license external nofollow noopener noreffer" href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">CC BY-NC 4.0</a>'
@@ -745,7 +746,7 @@ enableEmoji = true
 # Permalinks 配置 (https://gohugo.io/content-management/urls/#permalinks)
 [Permalinks]
   # posts = ":year/:month/:filename"
-  posts = ":filename"
+  posts = "/posts/:slug.html"
 
 # Privacy config (https://gohugo.io/about/hugo-and-gdpr/)
 # 隐私信息配置 (https://gohugo.io/about/hugo-and-gdpr/)
@@ -930,7 +931,7 @@ enableEmoji = true
         pre = "<i class='fab fa-github fa-fw' aria-hidden='true'></i>"
         post = ""
         name = ""
-        url = "https://github.com/dillonzq/LoveIt"
+        url = "https://github.com/lvyanru8200"
         title = "GitHub"
     [languages.zh-cn.params]
       [languages.zh-cn.params.search]
@@ -953,12 +954,12 @@ enableEmoji = true
           gravatarEmail = ""
           avatarURL = "/images/avatar.png"
           title = ""
-          subtitle = "一个简洁、优雅且高效的 Hugo 主题"
+          subtitle = "料敌击先,破敌摧坚"
           typeit = true
           social = true
           disclaimer = ""
       [languages.zh-cn.params.social]
-        GitHub = "xxxx"
+        GitHub = "lvyanru8200"
         Weibo = "xxxx"
         Steam = "xxxx"
         Zhihu = "xxxx"
