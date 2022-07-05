@@ -6,21 +6,20 @@ metadata:
     app: blog
 spec:
   ports:
-  - port: 8080
+  - port: 1313
     name: blog
   clusterIP: None
   selector:
     app: blog
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: blog
 spec:
   selector:
     matchLabels:
       app: blog
-  serviceName: "blog-service"
   replicas: 1
   minReadySeconds: 10
   template:
@@ -31,19 +30,13 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: blog
+        command:
+        - hugo
+        - server
+        - -e
+        - production
         image: lyr8200/blog:v2022.07.01
+        imagePullPolicy: Always
         ports:
-        - containerPort: 8080
+        - containerPort: 1313
           name: blog
-        volumeMounts:
-        - name: data
-          mountPath: /content
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "local-path"
-      resources:
-        requests:
-          storage: 2Gi
