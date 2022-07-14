@@ -1,0 +1,140 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: buildkitblog
+spec:
+  arguments:
+    parameters:
+      - name: repo
+        value: https://github.com/lvyanru8200/myblog.git
+      - name: branch
+        value: master
+      - name: path
+        value: .
+      - name: image
+        value: lyr8200/blog
+  entrypoint: main
+  # We use a volume claim template so that we can have a shared workspace.
+  volumeClaimTemplates:
+    - metadata:
+        name: work
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 64Mi
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: clone
+            template: clone
+            arguments:
+              parameters:
+                - name: repo
+                  value: "{{workflow.parameters.repo}}"
+                - name: branch
+                  value: "{{workflow.parameters.branch}}"
+          - name: image
+            template: image
+            arguments:
+              parameters:
+                - name: path
+                  value: "{{workflow.parameters.path}}"
+                - name: image
+                  value: "{{workflow.parameters.image}}"
+                - name: tag
+                  value: "{{tasks.clone.outputs.parameters.tag}}"
+            depends: "clone"
+          - name: promote
+            template: promote
+            arguments:
+               parameters:
+               - name: path
+                 value: "{{workflow.parameters.path}}"
+               - name: image
+                 value: "{{workflow.parameters.image}}"
+               - name: tag
+                 value: "{{tasks.clone.outputs.parameters.tag}}"
+            depends: "image"
+    - name: clone
+      inputs:
+        parameters:
+          - name: repo
+          - name: branch
+      outputs:
+        parameters:
+          - name: tag
+            valueFrom:
+              path: ./git-commit
+      container:
+        volumeMounts:
+          - mountPath: /work
+            name: work
+        image: alpine/git:v2.26.2
+        workingDir: /work
+        command: ["sh", "-c"]
+        args: ["
+          git remote set-url origin https://lvyanru8200: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@github.com/lvyanru8200/myblog.git
+          git clone --depth 1 --branch {{inputs.parameters.branch}} --single-branch {{inputs.parameters.repo}} . &&
+          git rev-parse --short HEAD > git-commit
+        "]
+    - name: image
+      inputs:
+        parameters:
+          - name: path
+          - name: image
+          - name: tag
+      volumes:
+        - name: docker-config
+          secret:
+            secretName: docker-config
+      container:
+        image: moby/buildkit:v0.9.3-rootless
+        volumeMounts:
+          - name: work
+            mountPath: /work
+          - name: docker-config
+            mountPath: /.docker
+        workingDir: /work/{{inputs.parameters.path}}
+        env:
+          - name: BUILDKITD_FLAGS
+            value: --oci-worker-no-process-sandbox
+          - name: DOCKER_CONFIG
+            value: /.docker
+        command:
+          - buildctl-daemonless.sh
+        args:
+          - build
+          - --frontend
+          - dockerfile.v0
+          - --local
+          - context=.
+          - --local
+          - dockerfile=.
+          - --output
+          - type=image,name={{inputs.parameters.image}}:{{inputs.parameters.tag}},push=true
+    - name: promote
+      inputs:
+        parameters:
+        - name: image
+        - name: path
+        - name: tag
+      container:
+        image:  cnych/kustomize:v1.0
+        workingDir: /work/{{inputs.parameters.path}}
+        command:
+          - sh
+          - -c
+          - |
+            cd deploy
+            git remote set-url origin https://lvyanru8200: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@github.com/lvyanru8200/myblog.git
+            kustomize edit set image lyr8200/blog={{inputs.parameters.image}}:{{inputs.parameters.tag}}
+            git config --global user.name "lvyanru8200"
+            git config --global user.email "1113706590@qq.com"
+            git add kustomization.yaml
+            git commit -m "Upgraded deploy.yaml with the tag {{inputs.parameters.tag}}"
+            git push
+        volumeMounts:
+          - name: work
+            mountPath: /work

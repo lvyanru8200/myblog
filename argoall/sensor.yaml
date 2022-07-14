@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: github
+spec:
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+  - name: github
+    eventSourceName: github
+    eventName: argo-combined-app
+  triggers:
+  - template:
+      name: trigger
+      argoWorkflow:
+        group: argoproj.io
+        version: v1alpha1
+        resource: workflows
+        operation: submit
+        source:
+          resource:
+            apiVersion: argoproj.io/v1alpha1
+            kind: Workflow
+            metadata:
+              generateName: blog-
+              namespace: argo
+            spec:
+              arguments:
+                parameters:
+                - name: repo
+                  value: https://github.com/lvyanru8200/myblog.git
+                - name: branch
+                  value: master
+                - name: image
+                  value: lyr8200/blog
+              workflowTemplateRef:
+                name: buildkitblog

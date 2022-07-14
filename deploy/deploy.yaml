@@ -33,6 +33,7 @@ spec:
         command:
         - hugo
         - server
+        - -D
         - -e
         - production
         image: lyr8200/blog:v2022.07.01

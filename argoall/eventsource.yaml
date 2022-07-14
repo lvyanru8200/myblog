@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: github
+spec:
+  service:
+    ports:
+    - port: 12000
+      targetPort: 12000
+  github:
+    argo-combined-app:
+      owner: lvyanru8200
+      repository: blog
+      webhook:
+        endpoint: /blog
+        port: "12000"
+        method: POST
+        url: https://event.lyrzyh.com/blog ## github上配置的webhook
+      events:
+        - "*"
+      apiToken:
+        name: github-access
+        key: token
+      insecure: true
+      active: true
+      contentType: json

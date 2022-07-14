@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: event-server-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"    # 开启证书
+spec:
+  rules:
+  - host: event.lyrzyh.com
+    http:
+      paths:
+      - path: /blog
+        pathType: Prefix
+        backend:
+          service:
+            name: github-eventsource-svc
+            port:
+              number: 12000
