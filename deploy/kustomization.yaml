@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ./deploy.yaml
+
+images:
+  - name: lyr8200/blog
+    newName: lyr8200/blog
+    newTag: v1
