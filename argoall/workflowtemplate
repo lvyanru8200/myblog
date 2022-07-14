@@ -75,7 +75,7 @@ spec:
         workingDir: /work
         command: ["sh", "-c"]
         args: ["
-          git remote set-url origin https://lvyanru8200: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@github.com/lvyanru8200/myblog.git
+          git remote set-url origin https://lvyanru8200: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@github.com/lvyanru8200/myblog.git
           git clone --depth 1 --branch {{inputs.parameters.branch}} --single-branch {{inputs.parameters.repo}} . &&
           git rev-parse --short HEAD > git-commit
         "]
@@ -128,7 +128,7 @@ spec:
           - -c
           - |
             cd deploy
-            git remote set-url origin https://lvyanru8200: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@github.com/lvyanru8200/myblog.git
+            git remote set-url origin https://lvyanru8200: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@github.com/lvyanru8200/myblog.git
             kustomize edit set image lyr8200/blog={{inputs.parameters.image}}:{{inputs.parameters.tag}}
             git config --global user.name "lvyanru8200"
             git config --global user.email "1113706590@qq.com"
