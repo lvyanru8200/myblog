@@ -8,4 +8,4 @@ COPY ./content ./content
 COPY ./static ./static
 COPY ./layouts ./layouts
 COPY ./config.toml ./config.toml
-CMD ["serve -D"]
+CMD ["serve"]
