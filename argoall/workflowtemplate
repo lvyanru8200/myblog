@@ -75,7 +75,7 @@ spec:
         workingDir: /work
         command: ["sh", "-c"]
         args: ["
-          git clone --depth 1 --branch {{inputs.parameters.branch}}  {{inputs.parameters.repo}} . &&
+          git clone --recursive {{inputs.parameters.repo}} . &&
           git rev-parse --short HEAD > git-commit
         "]
     - name: image
