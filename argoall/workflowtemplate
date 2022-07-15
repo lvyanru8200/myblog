@@ -6,7 +6,7 @@ spec:
   arguments:
     parameters:
       - name: repo
-        value: https://github.com/lvyanru8200/myblog.git
+        value: https://hub.fastgit.xyz/lvyanru8200/myblog.git
       - name: branch
         value: master
       - name: path
