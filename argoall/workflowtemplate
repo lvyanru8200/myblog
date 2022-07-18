@@ -127,7 +127,7 @@ spec:
           - -c
           - |
             cd deploy
-            git remote set-url origin https://lvyanru8200:Zhuzai2015@github.com/lvyanru8200/myblog.git
+            git remote set-url origin https://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@github.com/lvyanru8200/myblog.git
             git config --global user.name "lvyanru8200"
             git config --global user.email "1113706590@qq.com"
             kustomize edit set image lyr8200/blog={{inputs.parameters.image}}:{{inputs.parameters.tag}}

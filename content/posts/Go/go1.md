@@ -1,17 +1,17 @@
 ---
-title: "俺的博客致辞"
+title: "Golang学习"
 subtitle: ""
-date: 2022-07-14T14:59:01+08:00
-lastmod: 2022-07-14T14:59:01+08:00
-draft: false
+date: 2022-07-18T15:57:01+08:00
+lastmod: 2022-07-18T15:57:01+08:00
+draft: true
 author: "整挺好"
 authorLink: ""
-description: "从本人有了云服务器开始后，来来回回将个人博客弄好的过程"
+description: "关于Golang学习的过程"
 license: "整挺好许可"
 images: []
 
-tags: ["乱写"]
-categories: ["乱写"]
+tags: ["Golang"]
+categories: ["Golang"]
 
 featuredImage: ""
 featuredImagePreview: ""
@@ -60,4 +60,3 @@ seo:
 ---
 
 <!--more-->
-我靠，牛逼
