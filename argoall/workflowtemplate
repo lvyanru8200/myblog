@@ -22,6 +22,13 @@ spec:
         resources:
           requests:
             storage: 64Mi
+    - metadata:
+        name: newwork
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 64Mi
   templates:
     - name: main
       dag:
@@ -120,20 +127,20 @@ spec:
         - name: tag
       container:
         image:  lyr8200/kustomize-wirhssh:2022.07.19
-        workingDir: /work/{{inputs.parameters.path}}
+        workingDir: /newwork/{{inputs.parameters.path}}
         command:
           - sh
           - -c
           - |
-            cd deploy
             git config --global user.name "lvyanru8200"
             git config --global user.email "1113706590@qq.com"
             git config --global http.sslVerify false
-            git remote  set-url origin git@github.com:lvyanru8200/myblog.git
+            git clone git@github.com:lvyanru8200/deploy.git
+            cd deploy/deploy
             kustomize edit set image lyr8200/blog={{inputs.parameters.image}}:{{inputs.parameters.tag}}
             git add kustomization.yaml
             git commit -m "Upgraded deploy.yaml with the tag {{inputs.parameters.tag}}"
             git push
         volumeMounts:
-          - name: work
-            mountPath: /work
+          - name: newwork
+            mountPath: /newwork
