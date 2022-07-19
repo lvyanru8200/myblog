@@ -14,7 +14,6 @@ spec:
       - name: image
         value: lyr8200/blog
   entrypoint: main
-  # We use a volume claim template so that we can have a shared workspace.
   volumeClaimTemplates:
     - metadata:
         name: work
@@ -120,16 +119,17 @@ spec:
         - name: path
         - name: tag
       container:
-        image:  cnych/kustomize:v1.0
+        image:  lyr8200/kustomize-wirhssh:2022.07.19
         workingDir: /work/{{inputs.parameters.path}}
         command:
           - sh
           - -c
           - |
             cd deploy
-            git remote set-url origin https://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@github.com/lvyanru8200/myblog.git
             git config --global user.name "lvyanru8200"
             git config --global user.email "1113706590@qq.com"
+            git config --global http.sslVerify false
+            git remote  set-url origin git@github.com:lvyanru8200/myblog.git
             kustomize edit set image lyr8200/blog={{inputs.parameters.image}}:{{inputs.parameters.tag}}
             git add kustomization.yaml
             git commit -m "Upgraded deploy.yaml with the tag {{inputs.parameters.tag}}"
