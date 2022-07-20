@@ -2,7 +2,7 @@ FROM klakegg/hugo:ext-ubuntu
 
 EXPOSE 1313
 
-RUN git clone https://hub.fastgit.xyz/dillonzq/LoveIt.git ./themes/LoveIt
+RUN git clone https://dillonzq/LoveIt.git ./themes/LoveIt
 COPY ./assets ./assets
 COPY ./content ./content
 COPY ./static ./static
