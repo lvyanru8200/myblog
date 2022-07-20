@@ -85,7 +85,8 @@ spec:
           git config --global user.email 1113706590@qq.com &&
           git config --global http.sslVerify false &&
           git clone {{inputs.parameters.repo}} . &&
-          git rev-parse --short HEAD > git-commit
+          git rev-parse --short HEAD > git-commit &&
+          git clone  https://github.com/dillonzq/LoveIt.git ./themes/LoveIt
         "]
     - name: image
       inputs:
