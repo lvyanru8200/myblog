@@ -6,7 +6,7 @@ spec:
   arguments:
     parameters:
       - name: repo
-        value: https://hub.fastgit.xyz/lvyanru8200/myblog.git
+        value: git@github.com:lvyanru8200/myblog.git
       - name: branch
         value: master
       - name: path
@@ -77,10 +77,13 @@ spec:
         volumeMounts:
           - mountPath: /work
             name: work
-        image: alpine/git:v2.26.2
+        image: lyr8200/kustomize-wirhssh:2022.07.19
         workingDir: /work
         command: ["sh", "-c"]
         args: ["
+          git config --global user.name lvyanru8200 &&
+          git config --global user.email 1113706590@qq.com &&
+          git config --global http.sslVerify false &&
           git clone {{inputs.parameters.repo}} . &&
           git rev-parse --short HEAD > git-commit
         "]
