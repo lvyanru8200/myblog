@@ -28,7 +28,7 @@ spec:
               arguments:
                 parameters:
                 - name: repo
-                  value: https://github.com/lvyanru8200/myblog.git
+                  value: git@github.com:lvyanru8200/myblog.git
                 - name: branch
                   value: master
                 - name: image
