@@ -86,7 +86,7 @@ spec:
           git config --global http.sslVerify false &&
           git clone {{inputs.parameters.repo}} . &&
           git rev-parse --short HEAD > git-commit &&
-          git clone  https://github.com/dillonzq/LoveIt.git ./themes/LoveIt
+          git clone  git@github.com:dillonzq/LoveIt.git ./themes/LoveIt
         "]
     - name: image
       inputs:
