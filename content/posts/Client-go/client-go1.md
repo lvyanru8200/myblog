@@ -104,7 +104,7 @@ seo:
 > 😅 client-go感觉就是一个k8s工具包集合，提供了各种k8s客户端，阅读rest包，我大体看了下，感觉应该从client.go文件开始。
 
 - **client.go**
-    
+  
     ```go
     // NewRESTClient
     //  @Description: 返回通过k8s RestAPI
@@ -147,7 +147,7 @@ seo:
   type RESTClient struct {
       // 使用RestClient调用的跟url，应该是kubernets apiserver的服务器地址
       base *url.URL
-      // 请求某个资源在baseurl候拼接的某资源的版本
+      // api路径
       versionedAPIPath string
       // 与服务器之间的解码编码设置
       content ClientContentConfig
@@ -187,7 +187,7 @@ seo:
 
   > Config.go文件同样从RESTClientFor()方法开始，RESTClientFor方法通过传入一个config结构体，构建出RESTClient客户端，所以先看下config结构体
 
-  ```
+  ```go
   type Config struct {
     // apiserver的地址，host:port或者能到达apiserver的URL
   	Host string
@@ -341,4 +341,408 @@ seo:
   ```
 
   > 当config中的GroupVerison不存在的时候，使用UnversionedRESTClientFor，UnversionedRESTClientForConfigAndClient两个方法，与上方两个方法唯一的区别就是没有GroupVerison == nil的判断。
+  
+  ```go
+  // 需要看下clientContentConfig的Negotiator，这个接口主要是用来对GV进行编解码的
+  func NewClientNegotiator(serializer NegotiatedSerializer, gv schema.GroupVersion) ClientNegotiator {
+  	return &clientNegotiator{
+  		serializer: serializer,
+  		encode:     gv,
+  	}
+  }
+  ```
+  
+  > 在config.go文件中还有一个InClusterConfig()方法，这个方法返回值为一个config指针，主要是用来如果我们与apiserver交互的应用程序在k8s环境中，则可使用此方法获取pod内存放的token以及ca证书，来构造出rest.config对象
+  
+  ```go
+  func InClusterConfig() (*Config, error) {
+     // pod中存放token与ca证书的地址
+     const (
+        tokenFile  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+        rootCAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+     )
+     // 获取服务器apiserver地址以及端口
+     host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
+     if len(host) == 0 || len(port) == 0 {
+        return nil, ErrNotInCluster
+     }
+  	 // 获取token
+     token, err := ioutil.ReadFile(tokenFile)
+     if err != nil {
+        return nil, err
+     }
+  	 
+     tlsClientConfig := TLSClientConfig{}
+  	 // 读取ca证书对应的pem内容
+     if _, err := certutil.NewPool(rootCAFile); err != nil {
+        klog.Errorf("Expected to load root CA config from %s, but got err: %v", rootCAFile, err)
+     } else {
+        tlsClientConfig.CAFile = rootCAFile
+     }
+  
+     return &Config{
+        // TODO: switch to using cluster DNS.
+        Host:            "https://" + net.JoinHostPort(host, port),
+        TLSClientConfig: tlsClientConfig,
+        BearerToken:     string(token),
+        BearerTokenFile: tokenFile,
+     }, nil
+  }
+  ```
+  
+  
+  
+- **exec.go**
 
+  > exec.go文件主要包含两个转化，ConfigToExecCluster() ExecClusterToConfig()，主要是为exec凭证插件配置提供服务的，没用过，不太懂，后面补上
+
+- **request.go**
+
+  > 主要看下request.go文件
+
+  ```go
+  // 开局声明了两个变量
+  // 日志记录请求阈值，所有限速器设置了超过该时长的请求都会被记录
+  longThrottleLatency = 50 * time.Millisecond
+  // 日志级别为2的请求的阈值
+  extraLongThrottleLatency = 1 * time.Second
+  ```
+
+  > 还是先用newRequest()方法看
+
+  ```go
+  // newrequest方法需要传入一个RestClient，返回一个request结构体指针
+  func NewRequest(c *RESTClient) *Request {
+    // 首先定义请求异常处理接口，restClient中定义了那么就创建
+  	var backoff BackoffManager
+  	if c.createBackoffMgr != nil {
+  		backoff = c.createBackoffMgr()
+  	}
+  	if backoff == nil {
+  		backoff = noBackoff
+  	}
+  	// 如果定义了baseURL则将baseurl与apipath按照/拼接，没定义则直接使用/apis
+  	var pathPrefix string
+  	if c.base != nil {
+  		pathPrefix = path.Join("/", c.base.Path, c.versionedAPIPath)
+  	} else {
+  		pathPrefix = path.Join("/", c.versionedAPIPath)
+  	}
+  	// 定义请求超时时间
+  	var timeout time.Duration
+  	if c.Client != nil {
+  		timeout = c.Client.Timeout
+  	}
+  	// 构造reques结构体
+  	r := &Request{
+  		c:              c,
+  		rateLimiter:    c.rateLimiter,
+  		backoff:        backoff,
+  		timeout:        timeout,
+  		pathPrefix:     pathPrefix,
+  		maxRetries:     10,
+  		retryFn:        defaultRequestRetryFn,
+  		warningHandler: c.warningHandler,
+  	}
+  	// 设置请求头
+  	switch {
+  	case len(c.content.AcceptContentTypes) > 0:
+  		r.SetHeader("Accept", c.content.AcceptContentTypes)
+  	case len(c.content.ContentType) > 0:
+  		r.SetHeader("Accept", c.content.ContentType+", */*")
+  	}
+    // 结束构造
+  	return r
+  }
+  ```
+
+  > newResuest方法返回一个Request结构体，看下Request结构体
+
+  ```go
+  type Request struct {
+  	c *RESTClient
+  
+  	warningHandler WarningHandler
+  
+  	rateLimiter flowcontrol.RateLimiter
+  	backoff     BackoffManager
+  	timeout     time.Duration
+  	maxRetries  int
+    // 上部分基本都是RestClient传入的
+  
+  	// 下半部分定义是对接apiserver的api
+  	verb       string
+  	pathPrefix string
+  	subpath    string
+  	params     url.Values
+  	headers    http.Header
+  
+  	namespace    string
+  	namespaceSet bool
+  	resource     string
+  	resourceName string
+  	subresource  string
+  
+  	// request输出
+  	err  error
+  	body io.Reader
+  
+  	retryFn requestRetryFunc
+  }
+  ```
+
+  > request通过Resource() 方法设置要访问的资源
+
+  ```go
+  // resource方法传入resource的类型，构造request，设置要访问的资源类型
+  func (r *Request) Resource(resource string) *Request {
+  	if r.err != nil {
+  		return r
+  	}
+  	if len(r.resource) != 0 {
+  		r.err = fmt.Errorf("resource already set to %q, cannot change to %q", r.resource, resource)
+  		return r
+  	}
+    // 这里对resource名称进行验证，var NameMayNotBe = []string{".", ".."}，名称不能为.或者..，名称中不能有/或者%
+  	if msgs := IsValidPathSegmentName(resource); len(msgs) != 0 {
+  		r.err = fmt.Errorf("invalid resource %q: %v", resource, msgs)
+  		return r
+  	}
+  	r.resource = resource
+  	return r
+  }
+  ```
+
+  > 对于某资源的子资源，使用SubResource方法进行设置
+
+  ```go
+  // subResource在resource()与suffix()之间设置
+  func (r *Request) SubResource(subresources ...string) *Request {
+     if r.err != nil {
+        return r
+     }
+    // 拼接子资源,像是resource().SubResource().SubResource()这种是不允许的
+     subresource := path.Join(subresources...)
+     if len(r.subresource) != 0 {
+        r.err = fmt.Errorf("subresource already set to %q, cannot change to %q", r.subresource, subresource)
+        return r
+     }
+     // 验证子资源名称设置名称不允许为.或..，名称中不允许含有/或%
+     for _, s := range subresources {
+        if msgs := IsValidPathSegmentName(s); len(msgs) != 0 {
+           r.err = fmt.Errorf("invalid subresource %q: %v", s, msgs)
+           return r
+        }
+     }
+     r.subresource = subresource
+     return r
+  }
+  ```
+
+  > resource方法进行resource类型的设置，通过name方法进行resource名称的设置
+
+  ```go
+  // name传入resource的名称
+  func (r *Request) Name(resourceName string) *Request {
+  	if r.err != nil {
+  		return r
+  	}
+  	if len(resourceName) == 0 {
+  		r.err = fmt.Errorf("resource name may not be empty")
+  		return r
+  	}
+    // 不允许.resourceName().resourceName()这种设置
+  	if len(r.resourceName) != 0 {
+  		r.err = fmt.Errorf("resource name already set to %q, cannot change to %q", r.resourceName, resourceName)
+  		return r
+  	}
+    // 验证
+  	if msgs := IsValidPathSegmentName(resourceName); len(msgs) != 0 {
+  		r.err = fmt.Errorf("invalid resource name %q: %v", resourceName, msgs)
+  		return r
+  	}
+  	r.resourceName = resourceName
+  	return r
+  }
+  ```
+
+  > resource namespace的设置
+
+  ```go
+  func (r *Request) Namespace(namespace string) *Request {
+  	if r.err != nil {
+  		return r
+  	}
+    // 避免.namespace().namespace()这种调用
+  	if r.namespaceSet {
+  		r.err = fmt.Errorf("namespace already set to %q, cannot change to %q", r.namespace, namespace)
+  		return r
+  	}
+    // 字段验证
+  	if msgs := IsValidPathSegmentName(namespace); len(msgs) != 0 {
+  		r.err = fmt.Errorf("invalid namespace %q: %v", namespace, msgs)
+  		return r
+  	}
+  	r.namespaceSet = true
+  	r.namespace = namespace
+  	return r
+  }
+  ```
+
+  > 对于post，put请求，body的传递
+
+  ```go
+  func (r *Request) Body(obj interface{}) *Request {
+  	if r.err != nil {
+  		return r
+  	}
+    // 判断传入的obj的类型
+  	switch t := obj.(type) {
+    // 对于string类型的body
+  	case string:
+      // 认为他传入的是一个文件地址，读取他，设置请求体
+  		data, err := ioutil.ReadFile(t)
+  		if err != nil {
+  			r.err = err
+  			return r
+  		}
+  		glogBody("Request Body", data)
+  		r.body = bytes.NewReader(data)
+  	case []byte:
+      // 转化
+  		glogBody("Request Body", t)
+  		r.body = bytes.NewReader(t)
+  	case io.Reader:
+      // 直接发送
+  		r.body = t
+  	case runtime.Object:
+  		// 如果是runtime.Obj，避免传递指针
+  		if reflect.ValueOf(t).IsNil() {
+  			return r
+  		}
+      // 序列化
+  		encoder, err := r.c.content.Negotiator.Encoder(r.c.content.ContentType, nil)
+  		if err != nil {
+  			r.err = err
+  			return r
+  		}
+  		data, err := runtime.Encode(encoder, t)
+  		if err != nil {
+  			r.err = err
+  			return r
+  		}
+  		glogBody("Request Body", data)
+  		r.body = bytes.NewReader(data)
+      // 设置请求头
+  		r.SetHeader("Content-Type", r.c.content.ContentType)
+  	default:
+  		r.err = fmt.Errorf("unknown type used for body: %+v", obj)
+  	}
+  	return r
+  }
+  ```
+
+  > 继续向下看，再看下watch方法
+
+  ```go
+  // watch方法返回一个watch接口
+  func (r *Request) Watch(ctx context.Context) (watch.Interface, error) {
+  	// watch方法不对速率限制做判断
+  	if r.err != nil {
+  		return nil, r.err
+  	}
+  	
+  	client := r.c.Client
+  	if client == nil {
+  		client = http.DefaultClient
+  	}
+  	// 对于超时或者eof错误进行特殊处理
+  	isErrRetryableFunc := func(request *http.Request, err error) bool {
+  		if net.IsProbableEOF(err) || net.IsTimeout(err) {
+  			return true
+  		}
+  		return false
+  	}
+    // 设置最大重试次数
+  	retry := r.retryFn(r.maxRetries)
+  	url := r.URL().String()
+    // 循环
+  	for {
+      // 重试策略，如果ctx已经被取消，无需重试，进行retryafter判断，每次请求会对RetryAfter结构体进行测试进行设置，如果为空，直接return nil，设置从头读取，根据配置的backoffmanager做处理
+  		if err := retry.Before(ctx, r); err != nil {
+  			return nil, retry.WrapPreviousError(err)
+  		}
+  		// 新建httprequest
+  		req, err := r.newHTTPRequest(ctx)
+  		if err != nil {
+  			return nil, err
+  		}
+  		// 调用http do方法
+  		resp, err := client.Do(req)
+  		updateURLMetrics(ctx, r, resp, err)
+      // 重试配置
+  		retry.After(ctx, r, resp, err)
+      // 如果请求ok则新建一个tcp长连接
+  		if err == nil && resp.StatusCode == http.StatusOK {
+        // 下方newStreamWatcher方法
+  			return r.newStreamWatcher(resp)
+  		}
+  		
+  		done, transformErr := func() (bool, error) {
+  			defer readAndCloseResponseBody(resp)
+  
+  			if retry.IsNextRetry(ctx, r, req, resp, err, isErrRetryableFunc) {
+  				return false, nil
+  			}
+  
+  			if resp == nil {
+  				// the server must have sent us an error in 'err'
+  				return true, nil
+  			}
+  			if result := r.transformResponse(resp, req); result.err != nil {
+  				return true, result.err
+  			}
+  			return true, fmt.Errorf("for request %s, got status: %v", url, resp.StatusCode)
+  		}()
+  		if done {
+        // 如果是eof或者是超时，返回一个空的watch接口
+  			if isErrRetryableFunc(req, err) {
+  				return watch.NewEmptyWatch(), nil
+  			}
+  			if err == nil {
+  				err = transformErr
+  			}
+  			return nil, retry.WrapPreviousError(err)
+  		}
+  	}
+  }
+  ```
+
+  > 就是for了无数次没有错误的情况下，每次http请求，ok创建tcp长连接，解码body
+
+  ```go
+  func (r *Request) newStreamWatcher(resp *http.Response) (watch.Interface, error) {
+  	contentType := resp.Header.Get("Content-Type")
+  	mediaType, params, err := mime.ParseMediaType(contentType)
+  	if err != nil {
+  		klog.V(4).Infof("Unexpected content type from the server: %q: %v", contentType, err)
+  	}
+  	objectDecoder, streamingSerializer, framer, err := r.c.content.Negotiator.StreamDecoder(mediaType, params)
+  	if err != nil {
+  		return nil, err
+  	}
+  
+  	handleWarnings(resp.Header, r.warningHandler)
+  	// 读取resp的body 
+  	frameReader := framer.NewFrameReader(resp.Body)
+    // 解码frameReader的[]byte
+  	watchEventDecoder := streaming.NewDecoder(frameReader, streamingSerializer)
+  
+  	return watch.NewStreamWatcher(
+  		restclientwatch.NewDecoder(watchEventDecoder, objectDecoder),
+  		errors.NewClientErrorReporter(http.StatusInternalServerError, r.verb, "ClientWatchDecoding"),
+  	), nil
+  }
+  ```
+
+  
