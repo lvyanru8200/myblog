@@ -1,17 +1,17 @@
 ---
-title: "Golang学习"
+title: "Kafka Op01"
 subtitle: ""
-date: 2022-07-18T15:57:01+08:00
-lastmod: 2022-07-18T15:57:01+08:00
+date: 2022-07-26T11:15:19+08:00
+lastmod: 2022-07-26T11:15:19+08:00
 draft: true
-author: "整挺好"
+author: ""
 authorLink: ""
-description: "关于Golang学习的过程"
-license: "整挺好许可"
+description: ""
+license: ""
 images: []
 
-tags: ["Golang"]
-categories: ["Golang"]
+tags: []
+categories: []
 
 featuredImage: ""
 featuredImagePreview: ""
