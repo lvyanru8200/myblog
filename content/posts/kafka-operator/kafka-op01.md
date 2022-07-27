@@ -61,11 +61,11 @@ seo:
 
 <!--more-->
 
-#### Kafka Operator代码阅读--kafka CRD逻辑
+#### Kafka Operator代码阅读01--kafka CRD逻辑
 
 #### 本文主旨：
 
-- [strimize-kafka-opertaor](https://github.com/strimzi/strimzi-kafka-operator) kafka CRD代码阅读
+- [strimize-kafka-opertaor](https://github.com/strimzi/strimzi-kafka-operator) kafka CRD 代码阅读
 
 ##### no bb 直接开始，以下用kafka Operator代替strimize-kafka-operator
 
