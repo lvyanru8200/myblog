@@ -71,7 +71,7 @@ seo:
 
 #### Kafka Operator项目介绍
 
-​		Kafka Operator是一个CNCF sandbox project，以Operator的形式将kafka上云并提供自运维能力，在目前已经具有的kafka operator中应该是最牛逼的一个，正好我的工作也与这个相关，所以读下kafka operator 0.30.x版本的源码，学习下他们的处理逻辑，但是本人不是搞java的，这个项目是java编写的，读懂大体的逻辑就行，看看他的一个处理过程。
+​	Kafka Operator是一个CNCF sandbox project，以Operator的形式将kafka上云并提供自运维能力，在目前已经具有的kafka operator中应该是最牛逼的一个，正好我的工作也与这个相关，所以读下kafka operator 0.30.x版本的源码，学习下他们的处理逻辑，但是本人不是搞java的，这个项目是java编写的，读懂大体的逻辑就行，看看他的一个处理过程。
 
 <div align=center>
 <img src="/images/4.png" />

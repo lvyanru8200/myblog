@@ -285,7 +285,7 @@ void start(Zk zk) {
             synchronized (this) {
                 this.children = result;
             }
-            // Start watching existing children for config and partition changes
+            // 开始观察现有的zk中子路径的配置以及分区的变化
             for (String child : result) {
                 tcw.addChild(child);
                 tw.addChild(child);
