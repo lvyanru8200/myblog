@@ -1,5 +1,5 @@
 ---
-title: "KRaft"
+title: "kRaft"
 subtitle: ""
 date: 2022-08-01T09:44:18+08:00
 lastmod: 2022-08-01T09:44:18+08:00
